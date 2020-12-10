@@ -1,0 +1,72 @@
+ARG IMAGE_BASE="ubuntu"
+ARG IMAGE_TAG="18.04"
+
+FROM ${IMAGE_BASE}:${IMAGE_TAG}
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    DISPLAY=:1 \
+    VNC_PORT=5901 \
+    NO_VNC_PORT=6901 \
+    NO_VNC_HOME=/opt/noVNC \
+    VNC_COL_DEPTH=24 \
+    VNC_RESOLUTION=1280x1024 \
+    VNC_PW=vncpassword \
+    VNC_VIEW_ONLY=false \
+    STARTUPDIR=/dockerstartup \
+    HOME=/home/yicho
+
+# Only for China
+RUN sed -r 's;((archive)|(security)).ubuntu.com;mirrors.aliyun.com;g' /etc/apt/sources.list -i
+
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        vim \
+        git \
+        make \
+        wget \
+        net-tools \
+        locales \
+        bzip2 \
+        python-numpy
+
+### Install xvnc-server & noVNC - HTML5 based VNC viewer
+ADD https://dl.bintray.com/tigervnc/stable/tigervnc-1.10.1.x86_64.tar.gz /tmp/tigervnc.tar.xz
+ADD https://github.com/novnc/noVNC/archive/v1.2.0.tar.gz /tmp/v1.2.0.tar.gz
+ADD https://github.com/novnc/websockify/archive/v0.9.0.tar.gz /tmp/v0.9.0.tar.gz
+RUN tar xzf /tmp/tigervnc.tar.xz --strip 1 -C /
+RUN mkdir -p $NO_VNC_HOME/utils/websockify \
+    && tar xzf /tmp/v1.2.0.tar.gz --strip 1 -C $NO_VNC_HOME \
+    && tar xzf /tmp/v0.9.0.tar.gz --strip 1 -C $NO_VNC_HOME/utils/websockify \
+    && chmod +x -v $NO_VNC_HOME/utils/*.sh \
+    && ln -s $NO_VNC_HOME/vnc_lite.html $NO_VNC_HOME/index.html
+
+RUN rm -rf /tmp/*
+
+### Install xfce UI
+RUN apt-get install -y supervisor xfce4 xfce4-terminal xterm
+RUN apt-get purge -y pm-utils xscreensaver*
+
+### Clean pag
+RUN apt-get install -y ttf-wqy-zenhei
+RUN apt-get clean -y
+
+### Change Lang
+RUN locale-gen en_US.UTF-8
+
+ADD ./scripts $STARTUPDIR
+RUN chmod a+x -R $STARTUPDIR
+
+### Add user
+RUN useradd yicho
+WORKDIR /home/yicho
+RUN chown -R yicho:yicho /home/yicho
+RUN chown -R yicho:yicho $STARTUPDIR
+USER yicho
+
+ENTRYPOINT ["/tini", "--", "/dockerstartup/vnc_startup.sh"]
+CMD ["--wait"]

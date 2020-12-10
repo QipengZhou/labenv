@@ -11,8 +11,10 @@ debug:
 		@echo ${IMAGE_TAG}
 
 build-base:
-		docker pull ${IMAGE_BASE}:${IMAGE_TAG} || \
-		( docker build -f dockerfiles/Dockerfiles.$(PACKAGE_TYPE) \
+		docker build -f dockerfiles/Dockerfile.$(PACKAGE_TYPE) \
 		--build-arg IMAGE_BASE=$(IMAGE_BASE) \
 		--build-arg IMAGE_TAG="$(IMAGE_TAG)" \
-		-t $(DOCKER_REPOSITORY):$(IMAGE_BASE)-$(IMAGE_TAG)-$(DOCKER_BASE_SUFFIX) . )
+		-t $(DOCKER_REPOSITORY):$(IMAGE_BASE)-$(IMAGE_TAG) .
+
+publish-base:
+		docker push $(DOCKER_REPOSITORY):$(IMAGE_BASE)-$(IMAGE_TAG)
