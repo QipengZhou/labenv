@@ -52,7 +52,7 @@ RUN apt-get install -y supervisor xfce4 xfce4-terminal xterm
 RUN apt-get purge -y pm-utils xscreensaver*
 
 ### Clean pag
-RUN apt-get install -y ttf-wqy-zenhei
+RUN apt-get install -y ttf-wqy-zenhei sudo
 RUN apt-get clean -y
 
 ### Change Lang
@@ -62,7 +62,7 @@ ADD ./scripts $STARTUPDIR
 RUN chmod a+x -R $STARTUPDIR
 
 ### Add user
-RUN useradd yicho
+RUN useradd yicho && adduser yicho sudo
 WORKDIR /home/yicho
 RUN chown -R yicho:yicho /home/yicho
 RUN chown -R yicho:yicho $STARTUPDIR
