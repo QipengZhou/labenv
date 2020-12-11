@@ -13,7 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VNC_PW=vncpassword \
     VNC_VIEW_ONLY=false \
     STARTUPDIR=/dockerstartup \
-    HOME=/home/yicho
+    HOME=/root
 
 # Only for China
 RUN sed -r 's;((archive)|(security)).ubuntu.com;mirrors.aliyun.com;g' /etc/apt/sources.list -i
@@ -59,14 +59,10 @@ RUN apt-get clean -y
 RUN locale-gen en_US.UTF-8
 
 ADD ./scripts $STARTUPDIR
-RUN chmod a+x -R $STARTUPDIR
+RUN chmod 1777 -R $STARTUPDIR
 
 ### Add user
-RUN useradd yicho && adduser yicho sudo
-WORKDIR /home/yicho
-RUN chown -R yicho:yicho /home/yicho
-RUN chown -R yicho:yicho $STARTUPDIR
-USER yicho
+WORKDIR ${HOME}
 
 ENTRYPOINT ["/tini", "--", "/dockerstartup/vnc_startup.sh"]
 CMD ["--wait"]
